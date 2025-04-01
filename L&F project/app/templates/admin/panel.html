@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Admin Panel</h1>
+    
+    <h2>Pending Claims</h2>
+    <div class="row">
+        {% for claim in claims %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Claim for {{ claim.item.title }}</h5>
+                    <p>Reference ID: {{ claim.item.reference_id }}</p>
+                    <p>Claimed by: {{ claim.claimer.username }} ({{ claim.claimer.email }})</p>
+                    <p>Proof provided: {{ claim.proof }}</p>
+                    <a href="{{ url_for('main.review_claim', claim_id=claim.id) }}" 
+                       class="btn btn-primary">Review Claim</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2>Unresolved Items</h2>
+    <div class="row">
+        {% for item in items %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.title }}</h5>
+                    <p>Reference ID: {{ item.reference_id }}</p>
+                    <p>Status: {{ item.status }}</p>
+                    <p>Claims: {{ item.claims|length }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

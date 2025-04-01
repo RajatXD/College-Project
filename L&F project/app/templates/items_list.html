@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Lost and Found Items</h1>
+    
+    {% if current_user.is_authenticated %}
+    <div class="mb-4">
+        <a href="{{ url_for('main.report_item', type='lost') }}" class="btn btn-primary me-2">Report Lost Item</a>
+        <a href="{{ url_for('main.report_item', type='found') }}" class="btn btn-success">Report Found Item</a>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Filters</h5>
+                    <form method="GET">
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category">
+                                <option value="">All</option>
+                                <option value="electronics" {% if selected_category == 'electronics' %}selected{% endif %}>Electronics</option>
+                                <option value="clothing" {% if selected_category == 'clothing' %}selected{% endif %}>Clothing</option>
+                                <option value="documents" {% if selected_category == 'documents' %}selected{% endif %}>Documents</option>
+                                <option value="other" {% if selected_category == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">All</option>
+                                <option value="lost" {% if selected_status == 'lost' %}selected{% endif %}>Lost</option>
+                                <option value="found" {% if selected_status == 'found' %}selected{% endif %}>Found</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter me-2"></i>Apply Filters
+                        </button>
+                        <a href="{{ url_for('main.home') }}" class="btn btn-secondary w-100 mt-2">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <!-- Items List -->
+            {% for item in items %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        {% if item.image_file %}
+                        <div class="col-md-3">
+                            <img src="{{ url_for('static', filename='uploads/' + item.image_file) }}" 
+                                 class="img-fluid rounded" alt="Item image">
+                        </div>
+                        {% endif %}
+                        <div class="col">
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            <p class="card-text">{{ item.description }}</p>
+                            <p>
+                                <span class="badge bg-{{ 'danger' if item.status == 'lost' else 'success' }}">
+                                    {{ item.status.title() }}
+                                </span>
+                                <span class="badge bg-secondary">{{ item.category }}</span>
+                            </p>
+                            <p>Location: {{ item.location }}</p>
+                            <p>Date: {{ item.date_lost_found.strftime('%Y-%m-%d') }}</p>
+                            <p>Reference ID: {{ item.reference_id }}</p>
+                            <p>Posted by: {{ item.owner.username }}</p>
+                            {% if item.finder %}
+                                <p>Found by: {{ item.finder.username }}</p>
+                            {% endif %}
+                            
+                            {% if current_user.is_authenticated %}
+                                {% if item.is_resolved and item.claims %}
+                                    {% for claim in item.claims %}
+                                        {% if claim.status == 'approved' %}
+                                            {% if claim.claimer == current_user %}
+                                                <!-- Message for person whose claim was approved -->
+                                                <div class="alert alert-success mt-2 fade-in">
+                                                    <i class="fas fa-check-circle me-2"></i>Your claim has been approved!
+                                                    <div class="mt-2">
+                                                        <strong><i class="fas fa-map-marker-alt me-2"></i>Collection Details:</strong>
+                                                        <p class="mb-0 ms-4">Please collect your item from: {{ claim.collection_location }}</p>
+                                                        {% if claim.admin_notes %}
+                                                            <p class="mb-0 mt-2"><strong>Note:</strong> {{ claim.admin_notes }}</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% elif item.finder == current_user %}
+                                                <!-- Message for person who found the item -->
+                                                <div class="alert alert-info mt-2 fade-in">
+                                                    <i class="fas fa-info-circle me-2"></i>Match found!
+                                                    <div class="mt-2">
+                                                        <strong><i class="fas fa-map-marker-alt me-2"></i>Action Required:</strong>
+                                                        <p class="mb-0 ms-4">Please keep the item at: {{ claim.collection_location }}</p>
+                                                        {% if claim.admin_notes %}
+                                                            <p class="mb-0 mt-2"><strong>Note:</strong> {{ claim.admin_notes }}</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-info mt-2 fade-in">
+                                                    <i class="fas fa-info-circle me-2"></i>This item has been claimed and resolved.
+                                                </div>
+                                            {% endif %}
+                                        {% elif claim.status == 'rejected' and claim.claimer == current_user %}
+                                            <div class="alert alert-danger mt-2 fade-in">
+                                                <i class="fas fa-times-circle me-2"></i>Your claim has been rejected.
+                                                {% if claim.admin_notes %}
+                                                    <p class="mb-0 mt-2"><strong>Reason:</strong> {{ claim.admin_notes }}</p>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% elif not item.is_resolved and item.status == 'found' %}
+                                    {% if item.owner != current_user %}
+                                        {% if current_user.items_lost %}
+                                            <a href="{{ url_for('main.claim_item', reference_id=item.reference_id) }}" 
+                                               class="btn btn-primary">
+                                                <i class="fas fa-hand-holding me-2"></i>Claim This Item
+                                            </a>
+                                        {% else %}
+                                            <div class="alert alert-warning mt-2 fade-in">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>You need to report a lost item before claiming
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">No items found.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

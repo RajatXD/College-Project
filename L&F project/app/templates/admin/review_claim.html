@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Review Claim</h1>
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Item Details</h5>
+            <p>Title: {{ claim.item.title }}</p>
+            <p>Reference ID: {{ claim.item.reference_id }}</p>
+            <p>Description: {{ claim.item.description }}</p>
+            {% if claim.item.image_file %}
+            <img src="{{ url_for('static', filename='uploads/' + claim.item.image_file) }}" 
+                 class="img-fluid mb-3" alt="Item image">
+            {% endif %}
+            
+            <h5>Claim Details</h5>
+            <p>Claimed by: {{ claim.claimer.username }} ({{ claim.claimer.email }})</p>
+            <p>Date Claimed: {{ claim.date_claimed.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p>Proof provided: {{ claim.proof }}</p>
+            
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group mb-3">
+                    {{ form.status.label(class="form-label") }}
+                    {{ form.status(class="form-control") }}
+                </div>
+                <div class="form-group mb-3">
+                    {{ form.collection_location.label(class="form-label") }}
+                    {{ form.collection_location(class="form-control") }}
+                    <small class="text-muted">Specify where the user can collect the item if approved</small>
+                </div>
+                <div class="form-group mb-3">
+                    {{ form.admin_notes.label(class="form-label") }}
+                    {{ form.admin_notes(class="form-control", rows=3) }}
+                </div>
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

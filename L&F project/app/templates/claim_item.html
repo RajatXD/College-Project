@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Claim Item</h1>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{ item.title }}</h5>
+            <p class="card-text">{{ item.description }}</p>
+            <p>Reference ID: {{ item.reference_id }}</p>
+            <p>Category: {{ item.category }}</p>
+            <p>Color: {{ item.color }}</p>
+            <p>Location: {{ item.location }}</p>
+            <p>Date Found: {{ item.date_lost_found.strftime('%Y-%m-%d') }}</p>
+            {% if item.image_file %}
+            <img src="{{ url_for('static', filename='uploads/' + item.image_file) }}" 
+                 class="img-fluid mb-3" alt="Item image">
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Submit Your Claim</h5>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group mb-3">
+                    {{ form.proof.label }}
+                    {{ form.proof(class="form-control", rows=5, 
+                        placeholder="Please provide detailed proof of ownership...") }}
+                </div>
+                {{ form.submit(class="btn btn-primary") }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 
